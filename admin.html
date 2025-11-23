@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Wi-Fi Admin Panel</title>
+</head>
+
+<body>
+
+    <h2>Wi-Fi Access Requests</h2>
+
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Device</th>
+                <th>Password</th>
+                <th>Status</th>
+                <th>Requested At</th>
+            </tr>
+        </thead>
+        <tbody id="data"></tbody>
+    </table>
+
+    <script>
+        async function load() {
+            const res = await fetch("http://localhost:4000/api/requests");
+            const rows = await res.json();
+
+            document.getElementById("data").innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.id}</td>
+      <td>${r.deviceName}</td>
+      <td>${r.password}</td>
+      <td>${r.status}</td>
+      <td>${r.createdAt}</td>
+    </tr>
+  `).join("");
+        }
+        load();
+    </script>
+
+</body>
+
+</html>
