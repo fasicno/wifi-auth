@@ -2,43 +2,159 @@
 <html>
 
 <head>
-    <title>Wi-Fi Admin Panel</title>
+  <title>Wi-Fi Admin Panel</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      width: 80%;
+      max-width: 900px;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      margin: 0;
+      color: #333;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background: #f7f7f7;
+      font-weight: 600;
+    }
+
+    tbody tr:hover {
+      background: #f5f5f5;
+    }
+
+    .status {
+      padding: 0.25rem 0.5rem;
+      border-radius: 5px;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .status.pending {
+      background: #f0ad4e;
+      color: #fff;
+    }
+
+    .status.approved {
+      background: #5cb85c;
+      color: #fff;
+    }
+
+    .status.denied {
+      background: #d9534f;
+      color: #fff;
+    }
+
+    .remove-btn, .logout-btn {
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .remove-btn {
+      background: #d9534f;
+    }
+
+    .logout-btn {
+        background: #6c757d;
+    }
+
+  </style>
 </head>
 
 <body>
 
-    <h2>Wi-Fi Access Requests</h2>
+  <div class="container">
+    <div class="header">
+        <h2>Wi-Fi Access Requests</h2>
+        <a href="/api/admin-logout" class="logout-btn">Logout</a>
+    </div>
 
-    <table border="1" cellpadding="8" cellspacing="0">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Device</th>
-                <th>Password</th>
-                <th>Status</th>
-                <th>Requested At</th>
-            </tr>
-        </thead>
-        <tbody id="data"></tbody>
+    <table border="0" cellpadding="0" cellspacing="0">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Device</th>
+          <th>Password</th>
+          <th>Status</th>
+          <th>Requested At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="data"></tbody>
     </table>
+  </div>
 
-    <script>
-        async function load() {
-            const res = await fetch("http://localhost:4000/api/requests");
-            const rows = await res.json();
+  <script>
+    async function load() {
+      const res = await fetch("/api/requests");
+      if (res.redirected) {
+          window.location.href = res.url;
+          return;
+      }
+      const rows = await res.json();
 
-            document.getElementById("data").innerHTML = rows.map(r => `
-    <tr>
-      <td>${r.id}</td>
-      <td>${r.deviceName}</td>
-      <td>${r.password}</td>
-      <td>${r.status}</td>
-      <td>${r.createdAt}</td>
-    </tr>
-  `).join("");
+      document.getElementById("data").innerHTML = rows.map(r => `
+        <tr>
+          <td>${r.id}</td>
+          <td>${r.deviceName}</td>
+          <td>${r.password || ''}</td>
+          <td><span class="status ${r.status.toLowerCase()}">${r.status}</span></td>
+          <td>${new Date(r.createdAt).toLocaleString()}</td>
+          <td><button class="remove-btn" onclick="removeRequest(${r.id})">Remove</button></td>
+        </tr>
+      `).join("");
+    }
+
+    async function removeRequest(id) {
+      if (confirm("Are you sure you want to remove this request?")) {
+        const res = await fetch(`/api/remove/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          load();
+        } else {
+          alert("Failed to remove request.");
         }
-        load();
-    </script>
+      }
+    }
+
+    load();
+  </script>
 
 </body>
 
